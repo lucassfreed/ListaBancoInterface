@@ -11,15 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AlunoDAO {
-    
-    public static Connection conexao = ConexaoFactory.obterConexão();
 
     public int inserir(AlunoBean aluno) {
+        Connection conexao = ConexaoFactory.obterConexão();
         if (conexao != null) {
             String sql = "INSERT INTO alunos"
-                    + "\n(id, nome, codigo_matricula, nota_1, nota_2, nota_3, frequencia)"
-                    + "\nVALUES(?,?,?,?,?,?,?)";
-
+                    + "\n(id, nome, codigo_matricula, nota_1, nota_2, nota_3, media, frequencia)"
+                    + "\nVALUES(?,?,?,?,?,?,?,?)";
             try {
                 PreparedStatement ps = conexao.prepareStatement(sql,
                         PreparedStatement.RETURN_GENERATED_KEYS);
@@ -29,10 +27,10 @@ public class AlunoDAO {
                 ps.setFloat(4, aluno.getNota1());
                 ps.setFloat(5, aluno.getNota2());
                 ps.setFloat(6, aluno.getNota3());
-                ps.setByte(7, aluno.getFrequencia());
+                ps.setFloat(7, aluno.getMedia());
+                ps.setByte(8, aluno.getFrequencia());
                 ps.execute();
                 ResultSet resultSet = ps.getGeneratedKeys();
-                
                 if (resultSet.next()) {
                     return resultSet.getInt(1);
                 }
@@ -44,9 +42,10 @@ public class AlunoDAO {
         }
         return 0;
     }
-    
+
     public boolean alterar(AlunoBean aluno) {
-        String sql = "UPDATE clientes SET nome = ?, codigo_matricula = ?, nota_1 = ?, nota_2 = ?, nota_3 = ?, frequencia = ? WHERE id = ?";
+        Connection conexao = ConexaoFactory.obterConexão();
+        String sql = "UPDATE alunos SET nome = ?, codigo_matricula = ?, nota_1 = ?, nota_2 = ?, nota_3 = ?, media = ?, frequencia = ? WHERE id = ?";
         try {
             PreparedStatement ps = conexao.prepareStatement(sql);
             ps.setString(1, aluno.getNome());
@@ -54,8 +53,9 @@ public class AlunoDAO {
             ps.setFloat(3, aluno.getNota1());
             ps.setFloat(4, aluno.getNota2());
             ps.setFloat(5, aluno.getNota3());
-            ps.setByte(6, aluno.getFrequencia());
-            ps.setInt(5, aluno.getId());
+            ps.setFloat(6, aluno.getMedia());
+            ps.setByte(7, aluno.getFrequencia());
+            ps.setInt(8, aluno.getId());
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -64,8 +64,9 @@ public class AlunoDAO {
         }
         return false;
     }
-    
+
     public boolean apagar(int id) {
+        Connection conexao = ConexaoFactory.obterConexão();
         String sql = "DELETE FROM alunos WHERE id = ?;";
         if (conexao != null) {
             try {
@@ -80,9 +81,10 @@ public class AlunoDAO {
         }
         return false;
     }
-    
+
     public AlunoBean obterAlunoPorID(int id) {
-        String sql = "SELECT id, nome, codigo_matricula, nota_1, nota_2, nota_3, frequencia"
+        Connection conexao = ConexaoFactory.obterConexão();
+        String sql = "SELECT id, nome, codigo_matricula, nota_1, nota_2, nota_3, media, frequencia"
                 + "\nFROM alunos WHERE id = ?;";
         if (conexao != null) {
             try {
@@ -98,6 +100,7 @@ public class AlunoDAO {
                     aluno.setNota1(rs.getFloat("nota_1"));
                     aluno.setNota2(rs.getFloat("nota_2"));
                     aluno.setNota3(rs.getFloat("nota_3"));
+                    aluno.setMedia(rs.getFloat("media"));
                     aluno.setFrequencia(rs.getByte("frequencia"));
                     return aluno;
                 }
@@ -109,13 +112,29 @@ public class AlunoDAO {
         }
         return null;
     }
-    
+
+    public boolean conterAluno(String nomeAluno) {
+        List<AlunoBean> alunos = obterAlunos();
+        boolean condição = false;
+        for (int i = 0; i < alunos.size(); i++) {
+            if (condição == false) {
+                if (alunos.get(i).getNome().equals(nomeAluno)) {
+                    condição = true;
+                } else {
+                    condição = false;
+                }
+            }
+        }
+        return false;
+    }
+
     public List<AlunoBean> obterAlunos() {
+        Connection conexao = ConexaoFactory.obterConexão();
         List<AlunoBean> alunos = new ArrayList<>();
-        
+
         if (conexao != null) {
             String sql = "SELECT id, nome, codigo_matricula, nota_1, nota_2, "
-                    + "nota_3, frequencia FROM alunos";
+                    + "nota_3, media, frequencia FROM alunos";
             try {
                 Statement st = conexao.createStatement();
                 st.execute(sql);
@@ -128,18 +147,18 @@ public class AlunoDAO {
                     aluno.setNota1(rs.getFloat("nota_1"));
                     aluno.setNota2(rs.getFloat("nota_2"));
                     aluno.setNota3(rs.getFloat("nota_3"));
+                    aluno.setMedia(rs.getFloat("media"));
                     aluno.setFrequencia(rs.getByte("frequencia"));
                     alunos.add(aluno);
                 }
-                
-                
+
             } catch (SQLException e) {
                 e.printStackTrace();
             } finally {
                 ConexaoFactory.fecharConexão();
             }
         }
-        
+
         return alunos;
     }
 

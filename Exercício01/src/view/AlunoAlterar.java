@@ -8,24 +8,30 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-public class AlunoCadastro implements JFrameBaseInterface {
+public class AlunoAlterar implements JFrameBaseInterface {
 
+    public static String nome = "";
+    public static float n1 = 0f;
+    public static float n2 = 0f;
+    public static float n3 = 0f;
+    public static byte frequencia = 0;
+    public int linhaSelecionada;
     private JLabel jLabelNome, jLabelNota1, jLabelNota2, jLabelNota3, jLabelFrequencia;
     private JTextField jTextFieldNome, jTextFieldNota1, jTextFieldNota2, jTextFieldNota3, jTextFieldFrequencia;
     private JButton jButtonSalvar;
-    private JFrame jFrameCadastro;
+    private JFrame jFrameAlterar;
 
-    public AlunoCadastro() {
+    public AlunoAlterar() {
         configurandoLookAndFeel();
         gerarTela();
         instanciarComponentes();
@@ -33,37 +39,38 @@ public class AlunoCadastro implements JFrameBaseInterface {
         gerarLocalizacoes();
         gerarDimensoes();
         acaoBotaoSalvar();
-        jFrameCadastro.setVisible(true);
+        preencherCampos();
+        jFrameAlterar.setVisible(true);
     }
 
     @Override
     public void gerarTela() {
-        jFrameCadastro = new JFrame("Menu de cadastro");
-        jFrameCadastro.setSize(500, 520);
-        jFrameCadastro.setLayout(null);
-        jFrameCadastro.setLocationRelativeTo(null);
-        jFrameCadastro.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        jFrameCadastro.getContentPane().setBackground(Color.decode("#1e1e1e"));
+        jFrameAlterar = new JFrame("Menu de alteração de informações");
+        jFrameAlterar.setSize(500, 520);
+        jFrameAlterar.setLayout(null);
+        jFrameAlterar.setLocationRelativeTo(null);
+        jFrameAlterar.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        jFrameAlterar.getContentPane().setBackground(Color.decode("#1e1e1e"));
     }
 
     @Override
     public void adicionarComponentes() {
-        jFrameCadastro.add(jLabelNome);
-        jFrameCadastro.add(jTextFieldNome);
+        jFrameAlterar.add(jLabelNome);
+        jFrameAlterar.add(jTextFieldNome);
 
-        jFrameCadastro.add(jLabelNota1);
-        jFrameCadastro.add(jTextFieldNota1);
+        jFrameAlterar.add(jLabelNota1);
+        jFrameAlterar.add(jTextFieldNota1);
 
-        jFrameCadastro.add(jLabelNota2);
-        jFrameCadastro.add(jTextFieldNota2);
+        jFrameAlterar.add(jLabelNota2);
+        jFrameAlterar.add(jTextFieldNota2);
 
-        jFrameCadastro.add(jLabelNota3);
-        jFrameCadastro.add(jTextFieldNota3);
+        jFrameAlterar.add(jLabelNota3);
+        jFrameAlterar.add(jTextFieldNota3);
 
-        jFrameCadastro.add(jLabelFrequencia);
-        jFrameCadastro.add(jTextFieldFrequencia);
+        jFrameAlterar.add(jLabelFrequencia);
+        jFrameAlterar.add(jTextFieldFrequencia);
 
-        jFrameCadastro.add(jButtonSalvar);
+        jFrameAlterar.add(jButtonSalvar);
     }
 
     @Override
@@ -168,24 +175,6 @@ public class AlunoCadastro implements JFrameBaseInterface {
                     jTextFieldFrequencia.requestFocus();
                     return;
                 }
-                if (new AlunoDAO().conterAluno(jTextFieldNome.getText()) == true) {
-                    int opcao = JOptionPane.showOptionDialog(null,
-                            "Já há um aluno(a) registrado com este nome!\nDeseja alterar as informações deste(a) aluno(a)?", "Aviso",
-                            0,
-                            JOptionPane.QUESTION_MESSAGE,
-                            null,
-                            new Object[]{
-                                "Sim", "Não"
-                            },
-                            "Sim");
-                    if (opcao == 0) {
-                        new AlunoAlterar();
-                        jFrameCadastro.dispose();
-                        return;
-                    }
-                    jTextFieldNome.requestFocus();
-                    return;
-                }
                 verificaçãoSegurança();
 
                 String nome = jTextFieldNome.getText();
@@ -195,19 +184,36 @@ public class AlunoCadastro implements JFrameBaseInterface {
                 Byte frequencia = Byte.parseByte(jTextFieldFrequencia.getText());
                 float media = (nota1 + nota2 + nota3) / 3;
 
+                JTable jt = new AlunoPrincipal().jTable;
+
+                boolean condição = false;
+                int linhaSelecionada = 0;
+                for (int i = 0; i < jt.getRowCount(); i++) {
+                    if (!condição) {
+                        if (jt.getValueAt(i, 1).toString().equals(nome)) {
+                            condição = true;
+                            linhaSelecionada = i;
+                        } else {
+                            condição = false;
+                        }
+                    }
+                }
+
+                int id = Integer.parseInt(jt.getValueAt(linhaSelecionada, 0).toString());
                 AlunoBean aluno = new AlunoBean();
+                aluno.setId(id);
                 aluno.setNome(nome);
-                aluno.setCodigoMatricula(aleatorizarCodigoMatrícula());
+                aluno.setCodigoMatricula(aluno.getCodigoMatricula());
                 aluno.setNota1(nota1);
                 aluno.setNota2(nota2);
                 aluno.setNota3(nota3);
                 aluno.setMedia(media);
                 aluno.setFrequencia(frequencia);
-                new AlunoDAO().inserir(aluno);
-                JOptionPane.showMessageDialog(null, "O(a) aluno(a): '" + nome + "' foi salvo(a) com sucesso!"
+                new AlunoDAO().alterar(aluno);
+                JOptionPane.showMessageDialog(null, "O(a) aluno(a): '" + nome + "' foi alterado(a) com sucesso!"
                         + "\nA média deste(a) aluno(a) é: " + media);
                 new AlunoPrincipal().jTable.updateUI();
-                jFrameCadastro.dispose();
+                jFrameAlterar.dispose();
             }
         });
     }
@@ -295,35 +301,12 @@ public class AlunoCadastro implements JFrameBaseInterface {
 
     }
 
-    private void limparCampos() {
-        jTextFieldNome.setText("");
-        jTextFieldNota1.setText("");
-        jTextFieldNota2.setText("");
-        jTextFieldNota3.setText("");
-        jTextFieldFrequencia.setText("");
-    }
-
-    private String aleatorizarCodigoMatrícula() {
-        Random random = new Random();
-        String listaLetras = "QWERTYUIOPASDFGHDSDSAD9SANDISANIDNSIODNAISOADOISNDASNDOIANDSIANJKLZXCVBNM";
-        ArrayList<String> letrasArmazenadas = new ArrayList<>();
-        for (int i = 0; i < listaLetras.length(); i++) {
-            letrasArmazenadas.add(String.valueOf(listaLetras.charAt(i)));
-        }
-        int[] numeros = new int[5];
-        for (int i = 0; i < numeros.length; i++) {
-            numeros[i] = random.nextInt(10);
-        }
-        String[] letras = new String[5];
-        for (int i = 0; i < letras.length; i++) {
-            letras[i] = letrasArmazenadas.get(random.nextInt(letrasArmazenadas.size()));
-        }
-        String codigoMatricula = "#" + letras[0]
-                + numeros[0] + letras[1] + numeros[1]
-                + letras[2] + numeros[2] + letras[3]
-                + numeros[3] + letras[4] + numeros[4];
-        return codigoMatricula;
-
+    private void preencherCampos() {
+        jTextFieldNome.setText(nome);
+        jTextFieldNota1.setText(String.valueOf(n1));
+        jTextFieldNota2.setText(String.valueOf(n2));
+        jTextFieldNota3.setText(String.valueOf(n3));
+        jTextFieldFrequencia.setText(String.valueOf(frequencia));
     }
 
 }

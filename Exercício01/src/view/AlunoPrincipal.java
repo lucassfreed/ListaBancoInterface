@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.UIManager;
@@ -21,8 +22,8 @@ public class AlunoPrincipal implements JFrameBaseInterface {
 
     private JButton jButtonCadastrar, jButtonAlterar, jButtonExcluir;
     private DefaultTableModel dtm;
-    private JFrame jFramePrincipal;
-    private JTable jTable;
+    public JFrame jFramePrincipal;
+    public JTable jTable;
     private JScrollPane jScrollPaneTable;
 
     public AlunoPrincipal() {
@@ -34,6 +35,8 @@ public class AlunoPrincipal implements JFrameBaseInterface {
         gerarDimensoes();
         configScrollPaneTable();
         acaoBotaoCadastrar();
+        acaoBotaoAlterar();
+        acaoBotaoExcluir();
         popularTabela();
         jFramePrincipal.setVisible(true);
     }
@@ -73,7 +76,7 @@ public class AlunoPrincipal implements JFrameBaseInterface {
     @Override
     public void gerarTela() {
         jFramePrincipal = new JFrame("Menu principal");
-        jFramePrincipal.setSize(900, 600);
+        jFramePrincipal.setSize(1546, 600);
         jFramePrincipal.setLayout(null);
         jFramePrincipal.setLocationRelativeTo(null);
         jFramePrincipal.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -128,7 +131,7 @@ public class AlunoPrincipal implements JFrameBaseInterface {
         jButtonAlterar.setSize(150, 70);
         jButtonExcluir.setSize(150, 70);
 
-        jScrollPaneTable.setSize(700, 530);
+        jScrollPaneTable.setSize(1350, 530);
     }
 
     private void configScrollPaneTable() {
@@ -142,6 +145,46 @@ public class AlunoPrincipal implements JFrameBaseInterface {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new AlunoCadastro();
+            }
+        });
+    }
+
+    private void acaoBotaoAlterar() {
+        jButtonAlterar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int linhaSelecionada = jTable.getSelectedRow();
+                AlunoAlterar.nome = dtm.getValueAt(linhaSelecionada, 1).toString();
+                AlunoAlterar.n1 = Float.parseFloat(dtm.getValueAt(linhaSelecionada, 4).toString());
+                AlunoAlterar.n2 = Float.parseFloat(dtm.getValueAt(linhaSelecionada, 5).toString());
+                AlunoAlterar.n3 = Float.parseFloat(dtm.getValueAt(linhaSelecionada, 6).toString());
+                AlunoAlterar.frequencia = Byte.parseByte(dtm.getValueAt(linhaSelecionada, 7).toString().replace("%", ""));
+                new AlunoAlterar();
+            }
+        });
+    }
+
+    private void acaoBotaoExcluir() {
+        jButtonExcluir.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int opcao = JOptionPane.showOptionDialog(null,
+                        "Você tem certeza que deseja realmente excluir este aluno?\nEsta ação não pode ser desfeita!", "Verificação",
+                        0,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        new Object[]{
+                            "Sim", "Não"
+                        },
+                        "Sim");
+                if (opcao == 0) {
+                    int linhaSelecionada = jTable.getSelectedRow();
+                    new AlunoDAO().apagar(Integer.parseInt(dtm.getValueAt(linhaSelecionada, 0).toString()));
+                    dtm.removeRow(linhaSelecionada);
+                    JOptionPane.showMessageDialog(null, "Aluno excluído com sucesso!");
+                    return;
+                }
             }
         });
     }
